@@ -124,7 +124,7 @@ knob.Parent = slider
 Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
 
 -- Update WalkSpeed
-local dragging = false
+local dragging = True
 
 local function updateSpeed(inputPosition)
 	local percentage = math.clamp(

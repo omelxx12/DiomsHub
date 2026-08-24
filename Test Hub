@@ -7,29 +7,27 @@ local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 
--- Settings
-local InfiniteJump = false
-
+-- SETTINGS
 local WalkSpeedEnabled = false
 local DEFAULT_SPEED = 16
 local ENABLED_SPEED = 2000
 
--- Get humanoid safely
+-- Get the current Humanoid
 local function getHumanoid()
 	local character = player.Character or player.CharacterAdded:Wait()
 	return character:WaitForChild("Humanoid")
 end
 
--- Apply selected WalkSpeed
-local function applyWalkSpeed()
+-- Apply WalkSpeed
+local function updateWalkSpeed()
 	local humanoid = getHumanoid()
 
-	if humanoid then
-		if WalkSpeedEnabled then
-			humanoid.WalkSpeed = ENABLED_SPEED
-		else
-			humanoid.WalkSpeed = DEFAULT_SPEED
-		end
+	if WalkSpeedEnabled then
+		humanoid.WalkSpeed = ENABLED_SPEED
+		print("WalkSpeed ON:", humanoid.WalkSpeed)
+	else
+		humanoid.WalkSpeed = DEFAULT_SPEED
+		print("WalkSpeed OFF:", humanoid.WalkSpeed)
 	end
 end
 
@@ -117,7 +115,7 @@ walkSpeedButton.Size = UDim2.new(1, 0, 0, 40)
 walkSpeedButton.Position = UDim2.fromOffset(0, 50)
 walkSpeedButton.BackgroundColor3 = Color3.fromRGB(55, 55, 65)
 walkSpeedButton.TextColor3 = Color3.new(1, 1, 1)
-walkSpeedButton.Text = "WalkSpeed 2000: OFF"
+walkSpeedButton.Text = "WalkSpeed: OFF (16)"
 walkSpeedButton.Font = Enum.Font.Gotham
 walkSpeedButton.TextSize = 14
 walkSpeedButton.Parent = content
@@ -128,14 +126,14 @@ walkSpeedButton.Activated:Connect(function()
 	WalkSpeedEnabled = not WalkSpeedEnabled
 
 	if WalkSpeedEnabled then
-		walkSpeedButton.Text = "WalkSpeed 2000: ON"
+		walkSpeedButton.Text = "WalkSpeed: ON (2000)"
 		walkSpeedButton.BackgroundColor3 = Color3.fromRGB(50, 150, 80)
 	else
-		walkSpeedButton.Text = "WalkSpeed 2000: OFF"
+		walkSpeedButton.Text = "WalkSpeed: OFF (16)"
 		walkSpeedButton.BackgroundColor3 = Color3.fromRGB(55, 55, 65)
 	end
 
-	applyWalkSpeed()
+	updateWalkSpeed()
 end)
 
 -- =========================

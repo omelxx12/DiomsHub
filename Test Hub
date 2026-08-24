@@ -9,13 +9,28 @@ local player = Players.LocalPlayer
 
 -- Settings
 local InfiniteJump = false
-local WalkSpeed = 16
-local MAX_SPEED = 200
+
+local WalkSpeedEnabled = false
+local DEFAULT_SPEED = 16
+local ENABLED_SPEED = 2000
 
 -- Get humanoid safely
 local function getHumanoid()
 	local character = player.Character or player.CharacterAdded:Wait()
 	return character:WaitForChild("Humanoid")
+end
+
+-- Apply selected WalkSpeed
+local function applyWalkSpeed()
+	local humanoid = getHumanoid()
+
+	if humanoid then
+		if WalkSpeedEnabled then
+			humanoid.WalkSpeed = ENABLED_SPEED
+		else
+			humanoid.WalkSpeed = DEFAULT_SPEED
+		end
+	end
 end
 
 -- =========================
@@ -28,8 +43,8 @@ gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local main = Instance.new("Frame")
-main.Size = UDim2.fromOffset(300, 220)
-main.Position = UDim2.new(0.5, -150, 0.5, -110)
+main.Size = UDim2.fromOffset(300, 200)
+main.Position = UDim2.new(0.5, -150, 0.5, -100)
 main.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
 main.BorderSizePixel = 0
 main.Parent = gui
@@ -72,6 +87,7 @@ content.Parent = main
 
 local infJumpButton = Instance.new("TextButton")
 infJumpButton.Size = UDim2.new(1, 0, 0, 40)
+infJumpButton.Position = UDim2.fromOffset(0, 0)
 infJumpButton.BackgroundColor3 = Color3.fromRGB(55, 55, 65)
 infJumpButton.TextColor3 = Color3.new(1, 1, 1)
 infJumpButton.Text = "Infinite Jump: OFF"
@@ -93,114 +109,60 @@ infJumpButton.Activated:Connect(function()
 end)
 
 -- =========================
--- WALK SPEED SLIDER
+-- WALK SPEED TOGGLE
 -- =========================
 
-local speedLabel = Instance.new("TextLabel")
-speedLabel.Size = UDim2.new(1, 0, 0, 30)
-speedLabel.Position = UDim2.fromOffset(0, 50)
-speedLabel.BackgroundTransparency = 1
-speedLabel.TextColor3 = Color3.new(1, 1, 1)
-speedLabel.Text = "Walk Speed: " .. WalkSpeed
-speedLabel.Font = Enum.Font.Gotham
-speedLabel.TextSize = 14
-speedLabel.Parent = content
+local walkSpeedButton = Instance.new("TextButton")
+walkSpeedButton.Size = UDim2.new(1, 0, 0, 40)
+walkSpeedButton.Position = UDim2.fromOffset(0, 50)
+walkSpeedButton.BackgroundColor3 = Color3.fromRGB(55, 55, 65)
+walkSpeedButton.TextColor3 = Color3.new(1, 1, 1)
+walkSpeedButton.Text = "WalkSpeed 2000: OFF"
+walkSpeedButton.Font = Enum.Font.Gotham
+walkSpeedButton.TextSize = 14
+walkSpeedButton.Parent = content
 
--- Bigger invisible button for easier clicking
-local sliderButton = Instance.new("TextButton")
-sliderButton.Size = UDim2.new(1, 0, 0, 40)
-sliderButton.Position = UDim2.fromOffset(0, 80)
-sliderButton.BackgroundTransparency = 1
-sliderButton.Text = ""
-sliderButton.AutoButtonColor = false
-sliderButton.Parent = content
+Instance.new("UICorner", walkSpeedButton).CornerRadius = UDim.new(0, 8)
 
--- Visual slider bar
-local sliderBar = Instance.new("Frame")
-sliderBar.Size = UDim2.new(1, 0, 0, 10)
-sliderBar.Position = UDim2.new(0, 0, 0.5, -5)
-sliderBar.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
-sliderBar.BorderSizePixel = 0
-sliderBar.Parent = sliderButton
+walkSpeedButton.Activated:Connect(function()
 
-Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1, 0)
+	WalkSpeedEnabled = not WalkSpeedEnabled
 
--- Filled portion
-local fill = Instance.new("Frame")
-fill.Size = UDim2.new(WalkSpeed / MAX_SPEED, 0, 1, 0)
-fill.BackgroundColor3 = Color3.fromRGB(50, 150, 80)
-fill.BorderSizePixel = 0
-fill.Parent = sliderBar
+	if WalkSpeedEnabled then
+		walkSpeedButton.Text = "WalkSpeed 2000: ON"
+		walkSpeedButton.BackgroundColor3 = Color3.fromRGB(50, 150, 80)
 
-Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
+		print("WalkSpeed enabled: 2000")
+	else
+		walkSpeedButton.Text = "WalkSpeed 2000: OFF"
+		walkSpeedButton.BackgroundColor3 = Color3.fromRGB(55, 55, 65)
 
--- Knob
-local knob = Instance.new("Frame")
-knob.Size = UDim2.fromOffset(20, 20)
-knob.AnchorPoint = Vector2.new(0.5, 0.5)
-knob.Position = UDim2.new(WalkSpeed / MAX_SPEED, 0, 0.5, 0)
-knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-knob.BorderSizePixel = 0
-knob.Parent = sliderBar
-
-Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
-
--- =========================
--- SLIDER FUNCTION
--- =========================
-
-local dragging = false
-
-local function updateSlider(mousePosition)
-	local x = mousePosition.X
-	local left = sliderButton.AbsolutePosition.X
-	local width = sliderButton.AbsoluteSize.X
-
-	local percentage = math.clamp(
-		(x - left) / width,
-		0,
-		1
-	)
-
-	WalkSpeed = math.round(percentage * MAX_SPEED)
-
-	fill.Size = UDim2.new(percentage, 0, 1, 0)
-	knob.Position = UDim2.new(percentage, 0, 0.5, 0)
-
-	speedLabel.Text = "Walk Speed: " .. WalkSpeed
+		print("WalkSpeed disabled: 16")
+	end
 
 	applyWalkSpeed()
-
-	print("Slider working! Speed =", WalkSpeed)
-end
-
--- Start clicking/dragging
-sliderButton.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1
-		or input.UserInputType == Enum.UserInputType.Touch then
-
-		dragging = true
-		updateSlider(input.Position)
-	end
 end)
 
--- Continue dragging
-UserInputService.InputChanged:Connect(function(input)
-	if dragging then
-		if input.UserInputType == Enum.UserInputType.MouseMovement
-			or input.UserInputType == Enum.UserInputType.Touch then
+-- =========================
+-- KEEP WALK SPEED ACTIVE
+-- =========================
 
-			updateSlider(input.Position)
+task.spawn(function()
+	while true do
+		task.wait(0.1)
+
+		-- Only force 2000 while toggle is ON
+		if WalkSpeedEnabled then
+			local character = player.Character
+
+			if character then
+				local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+				if humanoid then
+					humanoid.WalkSpeed = ENABLED_SPEED
+				end
+			end
 		end
-	end
-end)
-
--- Stop dragging
-UserInputService.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1
-		or input.UserInputType == Enum.UserInputType.Touch then
-
-		dragging = false
 	end
 end)
 
@@ -218,10 +180,21 @@ UserInputService.JumpRequest:Connect(function()
 	end
 end)
 
--- Keep speed after respawn
+-- =========================
+-- KEEP SETTINGS AFTER RESPAWN
+-- =========================
+
 player.CharacterAdded:Connect(function(character)
+
 	local humanoid = character:WaitForChild("Humanoid")
-	humanoid.WalkSpeed = WalkSpeed
+
+	task.wait(0.2)
+
+	if WalkSpeedEnabled then
+		humanoid.WalkSpeed = ENABLED_SPEED
+	else
+		humanoid.WalkSpeed = DEFAULT_SPEED
+	end
 end)
 
 -- =========================
@@ -231,6 +204,7 @@ end)
 local minimized = false
 
 minimize.Activated:Connect(function()
+
 	minimized = not minimized
 
 	content.Visible = not minimized
@@ -239,7 +213,7 @@ minimize.Activated:Connect(function()
 		main.Size = UDim2.fromOffset(300, 45)
 		minimize.Text = "+"
 	else
-		main.Size = UDim2.fromOffset(300, 220)
+		main.Size = UDim2.fromOffset(300, 200)
 		minimize.Text = "—"
 	end
 end)

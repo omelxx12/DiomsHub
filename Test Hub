@@ -2,7 +2,7 @@ local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/omel
 
 local Window = Rayfield:CreateWindow({
 	Name = "Steal an Egg Ni Dioms",
-	LoadingTitle = "Rayfield Interface Suite",
+	LoadingTitle = "Dioms dioms dioms",
 	LoadingSubtitle = "by Dioms",
 	ConfigurationSaving = {
 		Enabled = true,

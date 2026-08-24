@@ -1,291 +1,152 @@
+-- Simple Private Test UI
+-- Place this LocalScript in StarterPlayer > StarterPlayerScripts
+
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
 
--- SETTINGS
-local InfiniteJump = false
-local WalkSpeed = 16
+-- Settings
+local infiniteJump = false
+local walkSpeedEnabled = false
 
-local MIN_SPEED = 16
-local MAX_SPEED = 2000
+local NORMAL_SPEED = 16
+local FAST_SPEED = 2000
 
--- GET HUMANOID
+-- Create ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "PrivateTestUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+-- Main Frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 260, 0, 180)
+mainFrame.Position = UDim2.new(0.5, -130, 0.5, -90)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = screenGui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 10)
+corner.Parent = mainFrame
+
+-- Title
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 45)
+title.BackgroundTransparency = 1
+title.Text = "PRIVATE TEST MENU"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextSize = 20
+title.Font = Enum.Font.GothamBold
+title.Parent = mainFrame
+
+-- Infinite Jump Button
+local jumpButton = Instance.new("TextButton")
+jumpButton.Size = UDim2.new(0.9, 0, 0, 45)
+jumpButton.Position = UDim2.new(0.05, 0, 0, 55)
+jumpButton.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+jumpButton.Text = "Infinite Jump: OFF"
+jumpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+jumpButton.TextSize = 16
+jumpButton.Font = Enum.Font.GothamBold
+jumpButton.Parent = mainFrame
+
+local jumpCorner = Instance.new("UICorner")
+jumpCorner.CornerRadius = UDim.new(0, 8)
+jumpCorner.Parent = jumpButton
+
+-- WalkSpeed Button
+local speedButton = Instance.new("TextButton")
+speedButton.Size = UDim2.new(0.9, 0, 0, 45)
+speedButton.Position = UDim2.new(0.05, 0, 0, 110)
+speedButton.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+speedButton.Text = "WalkSpeed: OFF (16)"
+speedButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedButton.TextSize = 16
+speedButton.Font = Enum.Font.GothamBold
+speedButton.Parent = mainFrame
+
+local speedCorner = Instance.new("UICorner")
+speedCorner.CornerRadius = UDim.new(0, 8)
+speedCorner.Parent = speedButton
+
+
+-- Get Character Humanoid
 local function getHumanoid()
 	local character = player.Character or player.CharacterAdded:Wait()
-
 	return character:WaitForChild("Humanoid")
 end
 
--- APPLY WALK SPEED
-local function applyWalkSpeed()
+
+-- Infinite Jump Toggle
+jumpButton.MouseButton1Click:Connect(function()
+
+	infiniteJump = not infiniteJump
+
+	if infiniteJump then
+		jumpButton.Text = "Infinite Jump: ON"
+		jumpButton.BackgroundColor3 = Color3.fromRGB(50, 180, 80)
+	else
+		jumpButton.Text = "Infinite Jump: OFF"
+		jumpButton.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+	end
+
+end)
+
+
+-- WalkSpeed Toggle
+speedButton.MouseButton1Click:Connect(function()
+
+	walkSpeedEnabled = not walkSpeedEnabled
+
 	local humanoid = getHumanoid()
 
-	if humanoid then
-		humanoid.WalkSpeed = WalkSpeed
-	end
-end
+	if walkSpeedEnabled then
 
--- =========================
--- CREATE GUI
--- =========================
+		humanoid.WalkSpeed = FAST_SPEED
 
-local gui = Instance.new("ScreenGui")
-gui.Name = "PrivateTestUI"
-gui.ResetOnSpawn = false
-gui.Parent = player:WaitForChild("PlayerGui")
+		speedButton.Text = "WalkSpeed: ON (2000)"
+		speedButton.BackgroundColor3 = Color3.fromRGB(50, 180, 80)
 
-local main = Instance.new("Frame")
-main.Size = UDim2.fromOffset(320, 230)
-main.Position = UDim2.new(0.5, -160, 0.5, -115)
-main.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
-main.BorderSizePixel = 0
-main.Parent = gui
-
-Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
-
--- TITLE
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -50, 0, 45)
-title.Position = UDim2.fromOffset(10, 0)
-title.BackgroundTransparency = 1
-title.Text = "PRIVATE TEST UI"
-title.TextColor3 = Color3.new(1, 1, 1)
-title.Font = Enum.Font.GothamBold
-title.TextSize = 18
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.Parent = main
-
--- MINIMIZE BUTTON
-local minimize = Instance.new("TextButton")
-minimize.Size = UDim2.fromOffset(35, 35)
-minimize.Position = UDim2.new(1, -42, 0, 5)
-minimize.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-minimize.Text = "—"
-minimize.TextColor3 = Color3.new(1, 1, 1)
-minimize.Font = Enum.Font.GothamBold
-minimize.TextSize = 18
-minimize.Parent = main
-
-Instance.new("UICorner", minimize).CornerRadius = UDim.new(0, 8)
-
--- CONTENT
-local content = Instance.new("Frame")
-content.Size = UDim2.new(1, -20, 1, -55)
-content.Position = UDim2.fromOffset(10, 50)
-content.BackgroundTransparency = 1
-content.Parent = main
-
--- =========================
--- INFINITE JUMP TOGGLE
--- =========================
-
-local infJumpButton = Instance.new("TextButton")
-infJumpButton.Size = UDim2.new(1, 0, 0, 40)
-infJumpButton.BackgroundColor3 = Color3.fromRGB(55, 55, 65)
-infJumpButton.Text = "Infinite Jump: OFF"
-infJumpButton.TextColor3 = Color3.new(1, 1, 1)
-infJumpButton.Font = Enum.Font.Gotham
-infJumpButton.TextSize = 14
-infJumpButton.Parent = content
-
-Instance.new("UICorner", infJumpButton).CornerRadius = UDim.new(0, 8)
-
-infJumpButton.Activated:Connect(function()
-
-	InfiniteJump = not InfiniteJump
-
-	if InfiniteJump then
-		infJumpButton.Text = "Infinite Jump: ON"
-		infJumpButton.BackgroundColor3 = Color3.fromRGB(50, 150, 80)
 	else
-		infJumpButton.Text = "Infinite Jump: OFF"
-		infJumpButton.BackgroundColor3 = Color3.fromRGB(55, 55, 65)
+
+		humanoid.WalkSpeed = NORMAL_SPEED
+
+		speedButton.Text = "WalkSpeed: OFF (16)"
+		speedButton.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+
 	end
 
 end)
 
--- =========================
--- WALK SPEED LABEL
--- =========================
 
-local speedLabel = Instance.new("TextLabel")
-speedLabel.Size = UDim2.new(1, 0, 0, 30)
-speedLabel.Position = UDim2.fromOffset(0, 50)
-speedLabel.BackgroundTransparency = 1
-speedLabel.Text = "WalkSpeed: 16"
-speedLabel.TextColor3 = Color3.new(1, 1, 1)
-speedLabel.Font = Enum.Font.Gotham
-speedLabel.TextSize = 14
-speedLabel.Parent = content
-
--- =========================
--- SLIDER BUTTON
--- =========================
-
-local sliderButton = Instance.new("TextButton")
-sliderButton.Size = UDim2.new(1, 0, 0, 45)
-sliderButton.Position = UDim2.fromOffset(0, 80)
-sliderButton.BackgroundTransparency = 1
-sliderButton.Text = ""
-sliderButton.AutoButtonColor = false
-sliderButton.Parent = content
-
--- SLIDER BAR
-local sliderBar = Instance.new("Frame")
-sliderBar.Size = UDim2.new(1, 0, 0, 10)
-sliderBar.Position = UDim2.new(0, 0, 0.5, -5)
-sliderBar.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
-sliderBar.BorderSizePixel = 0
-sliderBar.Parent = sliderButton
-
-Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1, 0)
-
--- FILLED BAR
-local fill = Instance.new("Frame")
-fill.Size = UDim2.new(0, 0, 1, 0)
-fill.BackgroundColor3 = Color3.fromRGB(50, 150, 80)
-fill.BorderSizePixel = 0
-fill.Parent = sliderBar
-
-Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
-
--- SLIDER KNOB
-local knob = Instance.new("Frame")
-knob.Size = UDim2.fromOffset(20, 20)
-knob.AnchorPoint = Vector2.new(0.5, 0.5)
-knob.Position = UDim2.new(0, 0, 0.5, 0)
-knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-knob.BorderSizePixel = 0
-knob.Parent = sliderBar
-
-Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
-
--- =========================
--- UPDATE WALK SPEED SLIDER
--- =========================
-
-local dragging = false
-
-local function updateSlider(position)
-
-	local percentage = math.clamp(
-		(position.X - sliderButton.AbsolutePosition.X)
-			/ sliderButton.AbsoluteSize.X,
-		0,
-		1
-	)
-
-	WalkSpeed = math.round(
-		MIN_SPEED + percentage * (MAX_SPEED - MIN_SPEED)
-	)
-
-	fill.Size = UDim2.new(percentage, 0, 1, 0)
-
-	knob.Position = UDim2.new(
-		percentage,
-		0,
-		0.5,
-		0
-	)
-
-	speedLabel.Text = "WalkSpeed: " .. WalkSpeed
-
-	applyWalkSpeed()
-
-	print("WalkSpeed:", WalkSpeed)
-end
-
--- START DRAGGING
-sliderButton.InputBegan:Connect(function(input)
-
-	if input.UserInputType == Enum.UserInputType.MouseButton1
-		or input.UserInputType == Enum.UserInputType.Touch then
-
-		dragging = true
-		updateSlider(input.Position)
-
-	end
-end)
-
--- DRAG
-UserInputService.InputChanged:Connect(function(input)
-
-	if dragging then
-
-		if input.UserInputType == Enum.UserInputType.MouseMovement
-			or input.UserInputType == Enum.UserInputType.Touch then
-
-			updateSlider(input.Position)
-
-		end
-	end
-end)
-
--- STOP DRAGGING
-UserInputService.InputEnded:Connect(function(input)
-
-	if input.UserInputType == Enum.UserInputType.MouseButton1
-		or input.UserInputType == Enum.UserInputType.Touch then
-
-		dragging = false
-
-	end
-end)
-
--- =========================
--- INFINITE JUMP SYSTEM
--- =========================
-
+-- Infinite Jump System
 UserInputService.JumpRequest:Connect(function()
 
-	if InfiniteJump then
+	if infiniteJump then
 
 		local humanoid = getHumanoid()
 
 		if humanoid then
-			humanoid:ChangeState(
-				Enum.HumanoidStateType.Jumping
-			)
+			humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
 		end
 
 	end
+
 end)
 
--- =========================
--- RESPAWN SUPPORT
--- =========================
 
+-- Keep WalkSpeed after respawn
 player.CharacterAdded:Connect(function(character)
 
 	local humanoid = character:WaitForChild("Humanoid")
 
-	task.wait(0.2)
-
-	humanoid.WalkSpeed = WalkSpeed
-
-end)
-
--- =========================
--- MINIMIZE
--- =========================
-
-local minimized = false
-
-minimize.Activated:Connect(function()
-
-	minimized = not minimized
-	content.Visible = not minimized
-
-	if minimized then
-
-		main.Size = UDim2.fromOffset(320, 45)
-		minimize.Text = "+"
-
+	if walkSpeedEnabled then
+		humanoid.WalkSpeed = FAST_SPEED
 	else
-
-		main.Size = UDim2.fromOffset(320, 230)
-		minimize.Text = "—"
-
+		humanoid.WalkSpeed = NORMAL_SPEED
 	end
+
 end)

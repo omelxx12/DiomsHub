@@ -1,212 +1,94 @@
--- Simple Private Test UI
--- IMPORTANT: Use a LocalScript
--- Put it in StarterPlayer > StarterPlayerScripts
+if game.PlaceId == 107778070777162 then
 
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
+	local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/omelxx12/DiomsHub/refs/heads/main/Test%20Hub"))()
 
-local player = Players.LocalPlayer
-
--- SETTINGS
-local WalkSpeedEnabled = false
-local DEFAULT_SPEED = 16
-local ENABLED_SPEED = 2000
-
--- Get the current Humanoid
-local function getHumanoid()
-	local character = player.Character or player.CharacterAdded:Wait()
-	return character:WaitForChild("Humanoid")
-end
-
--- Apply WalkSpeed
-local function updateWalkSpeed()
-	local humanoid = getHumanoid()
-
-	if WalkSpeedEnabled then
-		humanoid.WalkSpeed = ENABLED_SPEED
-		print("WalkSpeed ON:", humanoid.WalkSpeed)
-	else
-		humanoid.WalkSpeed = DEFAULT_SPEED
-		print("WalkSpeed OFF:", humanoid.WalkSpeed)
-	end
-end
-
--- =========================
--- CREATE GUI
--- =========================
-
-local gui = Instance.new("ScreenGui")
-gui.Name = "PrivateTestUI"
-gui.ResetOnSpawn = false
-gui.Parent = player:WaitForChild("PlayerGui")
-
-local main = Instance.new("Frame")
-main.Size = UDim2.fromOffset(300, 200)
-main.Position = UDim2.new(0.5, -150, 0.5, -100)
-main.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
-main.BorderSizePixel = 0
-main.Parent = gui
-
-Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
-
--- Title
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 45)
-title.BackgroundTransparency = 1
-title.Text = "PRIVATE TEST UI"
-title.TextColor3 = Color3.new(1, 1, 1)
-title.Font = Enum.Font.GothamBold
-title.TextSize = 18
-title.Parent = main
-
--- Minimize button
-local minimize = Instance.new("TextButton")
-minimize.Size = UDim2.fromOffset(35, 35)
-minimize.Position = UDim2.new(1, -42, 0, 5)
-minimize.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-minimize.Text = "—"
-minimize.TextColor3 = Color3.new(1, 1, 1)
-minimize.Font = Enum.Font.GothamBold
-minimize.TextSize = 18
-minimize.Parent = main
-
-Instance.new("UICorner", minimize).CornerRadius = UDim.new(0, 8)
-
--- Content
-local content = Instance.new("Frame")
-content.Size = UDim2.new(1, -20, 1, -55)
-content.Position = UDim2.fromOffset(10, 50)
-content.BackgroundTransparency = 1
-content.Parent = main
-
--- =========================
--- INFINITE JUMP
--- =========================
-
-local infJumpButton = Instance.new("TextButton")
-infJumpButton.Size = UDim2.new(1, 0, 0, 40)
-infJumpButton.Position = UDim2.fromOffset(0, 0)
-infJumpButton.BackgroundColor3 = Color3.fromRGB(55, 55, 65)
-infJumpButton.TextColor3 = Color3.new(1, 1, 1)
-infJumpButton.Text = "Infinite Jump: OFF"
-infJumpButton.Font = Enum.Font.Gotham
-infJumpButton.TextSize = 14
-infJumpButton.Parent = content
-
-Instance.new("UICorner", infJumpButton).CornerRadius = UDim.new(0, 8)
-
-infJumpButton.Activated:Connect(function()
-	InfiniteJump = not InfiniteJump
-
-	infJumpButton.Text = "Infinite Jump: " ..
-		(InfiniteJump and "ON" or "OFF")
-
-	infJumpButton.BackgroundColor3 = InfiniteJump
-		and Color3.fromRGB(50, 150, 80)
-		or Color3.fromRGB(55, 55, 65)
-end)
-
--- =========================
--- WALK SPEED TOGGLE
--- =========================
-
-local walkSpeedButton = Instance.new("TextButton")
-walkSpeedButton.Size = UDim2.new(1, 0, 0, 40)
-walkSpeedButton.Position = UDim2.fromOffset(0, 50)
-walkSpeedButton.BackgroundColor3 = Color3.fromRGB(55, 55, 65)
-walkSpeedButton.TextColor3 = Color3.new(1, 1, 1)
-walkSpeedButton.Text = "WalkSpeed: OFF (16)"
-walkSpeedButton.Font = Enum.Font.Gotham
-walkSpeedButton.TextSize = 14
-walkSpeedButton.Parent = content
-
-Instance.new("UICorner", walkSpeedButton).CornerRadius = UDim.new(0, 8)
-
-walkSpeedButton.Activated:Connect(function()
-	WalkSpeedEnabled = not WalkSpeedEnabled
-
-	if WalkSpeedEnabled then
-		walkSpeedButton.Text = "WalkSpeed: ON (2000)"
-		walkSpeedButton.BackgroundColor3 = Color3.fromRGB(50, 150, 80)
-	else
-		walkSpeedButton.Text = "WalkSpeed: OFF (16)"
-		walkSpeedButton.BackgroundColor3 = Color3.fromRGB(55, 55, 65)
-	end
-
-	updateWalkSpeed()
-end)
-
--- =========================
--- KEEP WALK SPEED ACTIVE
--- =========================
-
-task.spawn(function()
-	while true do
-		task.wait(0.1)
-
-		-- Only force 2000 while toggle is ON
-		if WalkSpeedEnabled then
-			local character = player.Character
-
-			if character then
-				local humanoid = character:FindFirstChildOfClass("Humanoid")
-
-				if humanoid then
-					humanoid.WalkSpeed = ENABLED_SPEED
+local Window = Rayfield:CreateWindow({
+	Name = "Steal an Egg Ni Dioms",
+	LoadingTitle = "Rayfield Interface Suite",
+	LoadingSubtitle = "by Dioms",
+	ConfigurationSaving = {
+		Enabled = true,
+		FolderName = nil, -- Create a custom folder for your hub/game
+		FileName = "Dioms Hub"
+	},
+	Discord = {
+		Enabled = false,
+		Invite = "noinvitelink", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ABCD would be ABCD
+		RememberJoins = true -- Set this to false to make them join the discord every time they load it up
+	},
+	KeySystem = true, -- Set this to true to use our key system
+	KeySettings = {
+		Title = "SAE | Key",
+		Subtitle = "Key kay Dioms",
+		Note = "No method of obtaining the key is provided",
+		FileName = "Key", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key
+		SaveKey = false,
+		GrabKeyFromSite = true, -- If this is true, set Key below to be your raw site link
+			Key = {"https://pastebin.com/ETXRvauj"} -- List of keys that will be accepted by the system, can be raw file links (pastebin, github etc) or just simple keys
+	}
+	})
+	
+	local MainTab = Window:CreateTab("Home", 4483362458) -- Title, Image
+	local MainSection = Tab:CreateSection("Toggles")
+	
+	Rayfield:Notify({
+		Title = "Executed Succesful",
+		Content = "Dioms Number 1",
+		Duration = 5,
+		Image = nil,
+		Actions = {
+			Ignore = {
+				Name = "Okay!",
+				Callback = function()
+					print("The user tapped Okay!")
 				end
+			},
+		},
+	})
+	
+	local Button = MainTab:CreateButton({
+		Name = "Infinite Jump",
+		Callback = function()
+			--Toggles the infinite jump between on or off on every script run
+			_G.infinjump = not _G.infinjump
+
+			if _G.infinjump == nil then
+				--Ensures this only runs once to save resources
+				_G.infinjumpStarted = true
+
+				--Notifies readiness
+				game.StarterGui:SetCore("SendNotification", {
+					Title = "Youtube Hub";
+					Text = "Infinite Jump Activated!";
+					Duration = 5;
+				})
+
+				--Toggles infinite jump
+				local plr = game:GetService("Players").LocalPlayer
+				local m = plr:GetMouse()
+
+				m.KeyDown:connect(function(k)
+					if _G.infinjump then
+						if k:byte() == 32 then
+							humanoid = game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+							humanoid:ChangeState("Jumping")
+							wait()
+							humanoid:ChangeState("Seated")
+						end
+					end
+				end)
 			end
-		end
-	end
-end)
-
--- =========================
--- INFINITE JUMP SYSTEM
--- =========================
-
-UserInputService.JumpRequest:Connect(function()
-	if InfiniteJump then
-		local humanoid = getHumanoid()
-
-		if humanoid then
-			humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-		end
-	end
-end)
-
--- =========================
--- KEEP SETTINGS AFTER RESPAWN
--- =========================
-
-player.CharacterAdded:Connect(function(character)
-
-	local humanoid = character:WaitForChild("Humanoid")
-
-	task.wait(0.2)
-
-	if WalkSpeedEnabled then
-		humanoid.WalkSpeed = ENABLED_SPEED
-	else
-		humanoid.WalkSpeed = DEFAULT_SPEED
-	end
-end)
-
--- =========================
--- MINIMIZE
--- =========================
-
-local minimized = false
-
-minimize.Activated:Connect(function()
-
-	minimized = not minimized
-
-	content.Visible = not minimized
-
-	if minimized then
-		main.Size = UDim2.fromOffset(300, 45)
-		minimize.Text = "+"
-	else
-		main.Size = UDim2.fromOffset(300, 200)
-		minimize.Text = "—"
-	end
-end)
+		end,
+	})
+	
+local Slider = MainTab:CreateSlider({
+	Name = "WalkSpeed Slider",
+	Range = {0, 2000},
+	Increment = 1,
+	Suffix = "Speed",
+	CurrentValue = 16,
+	Flag = "Slider1",
+	Callback = function(Value)
+		game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = (Value)
+	end,	
+	})

@@ -10,7 +10,7 @@ local player = Players.LocalPlayer
 -- Settings
 local InfiniteJump = false
 local WalkSpeed = 16
-local MAX_SPEED = 200
+local MAX_SPEED = 2000
 
 -- =========================
 -- GET HUMANOID SAFELY
@@ -36,7 +36,7 @@ local function applyWalkSpeed(character)
 
 	if humanoid then
 		humanoid.WalkSpeed = WalkSpeed
-		print("WalkSpeed applied:", WalkSpeed)
+		print("WalkSpeed applied:", MAX_SPEED)
 	end
 end
 
@@ -220,7 +220,7 @@ local function updateSlider(mousePosition)
 	-- Apply selected WalkSpeed
 	applyWalkSpeed()
 
-	print("Slider working! Speed =", WalkSpeed)
+	print("Slider working! Speed =", MAX_SPEED)
 end
 
 -- Start clicking/dragging

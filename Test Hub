@@ -125,19 +125,14 @@ walkSpeedButton.Parent = content
 Instance.new("UICorner", walkSpeedButton).CornerRadius = UDim.new(0, 8)
 
 walkSpeedButton.Activated:Connect(function()
-
 	WalkSpeedEnabled = not WalkSpeedEnabled
 
 	if WalkSpeedEnabled then
 		walkSpeedButton.Text = "WalkSpeed 2000: ON"
 		walkSpeedButton.BackgroundColor3 = Color3.fromRGB(50, 150, 80)
-
-		print("WalkSpeed enabled: 2000")
 	else
 		walkSpeedButton.Text = "WalkSpeed 2000: OFF"
 		walkSpeedButton.BackgroundColor3 = Color3.fromRGB(55, 55, 65)
-
-		print("WalkSpeed disabled: 16")
 	end
 
 	applyWalkSpeed()

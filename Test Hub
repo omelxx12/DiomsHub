@@ -1,294 +1,229 @@
--- Simple Private Test UI
--- IMPORTANT: Use a LocalScript
--- Put it in StarterPlayer > StarterPlayerScripts
+-- Private Test UI
+-- Put this LocalScript in:
+-- StarterPlayer > StarterPlayerScripts
 
 local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 
--- Settings
-local InfiniteJump = false
-local WalkSpeed = 16
-local MAX_SPEED = 2000
+--// SETTINGS
+local Settings = {
+    AutoBuyAllSeeds = false,
+    AutoHarvestAll = false,
+    AutoPickupAllFruit = false,
+    AutoSellAll = false,
 
--- =========================
--- GET HUMANOID SAFELY
--- =========================
+    BuySeeds = false,
+    AutoSell = false,
+    AutoBuyEgg = false
+}
 
-local function getHumanoid()
-	local character = player.Character or player.CharacterAdded:Wait()
-	return character:WaitForChild("Humanoid")
-end
+--// GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "PrivateTestUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
--- =========================
--- APPLY WALK SPEED
--- =========================
+-- Toggle Button
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Size = UDim2.new(0, 120, 0, 40)
+ToggleButton.Position = UDim2.new(0, 20, 0.5, -20)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.Text = "OPEN MENU"
+ToggleButton.TextSize = 14
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.Parent = ScreenGui
 
-local function applyWalkSpeed(character)
-	character = character or player.Character
+Instance.new("UICorner", ToggleButton).CornerRadius = UDim.new(0, 8)
 
-	if not character then
-		return
-	end
+-- Main Frame
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 280, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -140, 0.5, -200)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.Visible = false
+MainFrame.Parent = ScreenGui
 
-	local humanoid = character:FindFirstChildOfClass("Humanoid")
-
-	if humanoid then
-		humanoid.WalkSpeed = WalkSpeed
-		print("WalkSpeed applied:", MAX_SPEED)
-	end
-end
-
--- =========================
--- CHARACTER RESPAWN
--- =========================
-
-local function respawn(character)
-	local humanoid = character:WaitForChild("Humanoid")
-
-	if humanoid then
-		task.wait(0.1)
-		humanoid.WalkSpeed = WalkSpeed
-
-		print("Respawn WalkSpeed:", WalkSpeed)
-	end
-end
-
--- Listen for respawns
-player.CharacterAdded:Connect(respawn)
-
--- Apply speed to current character if already spawned
-if player.Character then
-	applyWalkSpeed(player.Character)
-end
-
--- =========================
--- CREATE GUI
--- =========================
-
-local gui = Instance.new("ScreenGui")
-gui.Name = "PrivateTestUI"
-gui.ResetOnSpawn = false
-gui.Parent = player:WaitForChild("PlayerGui")
-
-local main = Instance.new("Frame")
-main.Size = UDim2.fromOffset(300, 220)
-main.Position = UDim2.new(0.5, -150, 0.5, -110)
-main.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
-main.BorderSizePixel = 0
-main.Parent = gui
-
-Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 
 -- Title
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 45)
-title.BackgroundTransparency = 1
-title.Text = "PRIVATE TEST UI"
-title.TextColor3 = Color3.new(1, 1, 1)
-title.Font = Enum.Font.GothamBold
-title.TextSize = 18
-title.Parent = main
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 50)
+Title.BackgroundTransparency = 1
+Title.Text = "PRIVATE TEST MENU"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 18
+Title.Font = Enum.Font.GothamBold
+Title.Parent = MainFrame
 
--- Minimize button
-local minimize = Instance.new("TextButton")
-minimize.Size = UDim2.fromOffset(35, 35)
-minimize.Position = UDim2.new(1, -42, 0, 5)
-minimize.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-minimize.Text = "—"
-minimize.TextColor3 = Color3.new(1, 1, 1)
-minimize.Font = Enum.Font.GothamBold
-minimize.TextSize = 18
-minimize.Parent = main
+-- Scrolling area
+local Scroll = Instance.new("ScrollingFrame")
+Scroll.Size = UDim2.new(1, -20, 1, -65)
+Scroll.Position = UDim2.new(0, 10, 0, 55)
+Scroll.BackgroundTransparency = 1
+Scroll.BorderSizePixel = 0
+Scroll.ScrollBarThickness = 4
+Scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+Scroll.Parent = MainFrame
 
-Instance.new("UICorner", minimize).CornerRadius = UDim.new(0, 8)
+local Layout = Instance.new("UIListLayout")
+Layout.Padding = UDim.new(0, 8)
+Layout.Parent = Scroll
 
--- Content
-local content = Instance.new("Frame")
-content.Size = UDim2.new(1, -20, 1, -55)
-content.Position = UDim2.fromOffset(10, 50)
-content.BackgroundTransparency = 1
-content.Parent = main
+--// CREATE TOGGLE
+local function CreateToggle(text, settingName)
 
--- =========================
--- INFINITE JUMP
--- =========================
+    local Button = Instance.new("TextButton")
+    Button.Size = UDim2.new(1, 0, 0, 42)
+    Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Button.Font = Enum.Font.Gotham
+    Button.TextSize = 14
+    Button.Parent = Scroll
 
-local infJumpButton = Instance.new("TextButton")
-infJumpButton.Size = UDim2.new(1, 0, 0, 40)
-infJumpButton.BackgroundColor3 = Color3.fromRGB(55, 55, 65)
-infJumpButton.TextColor3 = Color3.new(1, 1, 1)
-infJumpButton.Text = "Infinite Jump: OFF"
-infJumpButton.Font = Enum.Font.Gotham
-infJumpButton.TextSize = 14
-infJumpButton.Parent = content
+    Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 7)
 
-Instance.new("UICorner", infJumpButton).CornerRadius = UDim.new(0, 8)
+    local function UpdateButton()
+        local status = Settings[settingName]
 
-infJumpButton.Activated:Connect(function()
-	InfiniteJump = not InfiniteJump
+        if status then
+            Button.Text = text .. " : ON"
+            Button.BackgroundColor3 = Color3.fromRGB(40, 140, 70)
+        else
+            Button.Text = text .. " : OFF"
+            Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        end
+    end
 
-	infJumpButton.Text =
-		"Infinite Jump: " .. (InfiniteJump and "ON" or "OFF")
+    Button.MouseButton1Click:Connect(function()
+        Settings[settingName] = not Settings[settingName]
+        UpdateButton()
+    end)
 
-	infJumpButton.BackgroundColor3 = InfiniteJump
-		and Color3.fromRGB(50, 150, 80)
-		or Color3.fromRGB(55, 55, 65)
-end)
+    UpdateButton()
 
--- =========================
--- WALK SPEED SLIDER
--- =========================
-
-local speedLabel = Instance.new("TextLabel")
-speedLabel.Size = UDim2.new(1, 0, 0, 30)
-speedLabel.Position = UDim2.fromOffset(0, 50)
-speedLabel.BackgroundTransparency = 1
-speedLabel.TextColor3 = Color3.new(1, 1, 1)
-speedLabel.Text = "Walk Speed: " .. WalkSpeed
-speedLabel.Font = Enum.Font.Gotham
-speedLabel.TextSize = 14
-speedLabel.Parent = content
-
--- Bigger invisible button for easier clicking
-local sliderButton = Instance.new("TextButton")
-sliderButton.Size = UDim2.new(1, 0, 0, 40)
-sliderButton.Position = UDim2.fromOffset(0, 80)
-sliderButton.BackgroundTransparency = 1
-sliderButton.Text = ""
-sliderButton.AutoButtonColor = false
-sliderButton.Parent = content
-
--- Visual slider bar
-local sliderBar = Instance.new("Frame")
-sliderBar.Size = UDim2.new(1, 0, 0, 10)
-sliderBar.Position = UDim2.new(0, 0, 0.5, -5)
-sliderBar.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
-sliderBar.BorderSizePixel = 0
-sliderBar.Parent = sliderButton
-
-Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(1, 0)
-
--- Filled portion
-local fill = Instance.new("Frame")
-fill.Size = UDim2.new(WalkSpeed / MAX_SPEED, 0, 1, 0)
-fill.BackgroundColor3 = Color3.fromRGB(50, 150, 80)
-fill.BorderSizePixel = 0
-fill.Parent = sliderBar
-
-Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
-
--- Knob
-local knob = Instance.new("Frame")
-knob.Size = UDim2.fromOffset(20, 20)
-knob.AnchorPoint = Vector2.new(0.5, 0.5)
-knob.Position = UDim2.new(WalkSpeed / MAX_SPEED, 0, 0.5, 0)
-knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-knob.BorderSizePixel = 0
-knob.Parent = sliderBar
-
-Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
-
--- =========================
--- SLIDER FUNCTION
--- =========================
-
-local dragging = false
-
-local function updateSlider(mousePosition)
-
-	local x = mousePosition.X
-	local left = sliderButton.AbsolutePosition.X
-	local width = sliderButton.AbsoluteSize.X
-
-	local percentage = math.clamp(
-		(x - left) / width,
-		0,
-		1
-	)
-
-	WalkSpeed = math.round(percentage * MAX_SPEED)
-
-	-- Update visuals
-	fill.Size = UDim2.new(percentage, 0, 1, 0)
-	knob.Position = UDim2.new(percentage, 0, 0.5, 0)
-
-	-- Update text
-	speedLabel.Text = "Walk Speed: " .. WalkSpeed
-
-	-- Apply selected WalkSpeed
-	applyWalkSpeed()
-
-	print("Slider working! Speed =", MAX_SPEED)
+    return Button
 end
 
--- Start clicking/dragging
-sliderButton.InputBegan:Connect(function(input)
+-- MAIN OPTIONS
+CreateToggle("Auto Buy All Seeds", "AutoBuyAllSeeds")
+CreateToggle("Auto Harvest All", "AutoHarvestAll")
+CreateToggle("Auto Pick Up All Fruit", "AutoPickupAllFruit")
+CreateToggle("Auto Sell All", "AutoSellAll")
 
-	if input.UserInputType == Enum.UserInputType.MouseButton1
-		or input.UserInputType == Enum.UserInputType.Touch then
+-- Section Label
+local SelectiveLabel = Instance.new("TextLabel")
+SelectiveLabel.Size = UDim2.new(1, 0, 0, 35)
+SelectiveLabel.BackgroundTransparency = 1
+SelectiveLabel.Text = "SELECTIVE OPTIONS"
+SelectiveLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+SelectiveLabel.TextSize = 13
+SelectiveLabel.Font = Enum.Font.GothamBold
+SelectiveLabel.Parent = Scroll
 
-		dragging = true
-		updateSlider(input.Position)
-	end
+-- SELECTIVE OPTIONS
+CreateToggle("Buy Seeds", "BuySeeds")
+CreateToggle("Auto Sell", "AutoSell")
+CreateToggle("Auto Buy Egg", "AutoBuyEgg")
+
+-- OPEN / CLOSE MENU
+ToggleButton.MouseButton1Click:Connect(function()
+
+    MainFrame.Visible = not MainFrame.Visible
+
+    if MainFrame.Visible then
+        ToggleButton.Text = "CLOSE MENU"
+    else
+        ToggleButton.Text = "OPEN MENU"
+    end
+
 end)
 
--- Continue dragging
-UserInputService.InputChanged:Connect(function(input)
+--------------------------------------------------
+-- PRIVATE TEST FUNCTIONS
+-- Connect these functions to YOUR game's systems
+--------------------------------------------------
 
-	if dragging then
-		if input.UserInputType == Enum.UserInputType.MouseMovement
-			or input.UserInputType == Enum.UserInputType.Touch then
+local function AutoBuyAllSeeds()
+    print("Auto buying all seeds...")
+    
+    -- Add your game's seed purchasing logic here
+end
 
-			updateSlider(input.Position)
-		end
-	end
-end)
+local function AutoHarvestAll()
+    print("Auto harvesting all crops...")
 
--- Stop dragging
-UserInputService.InputEnded:Connect(function(input)
+    -- Add your own harvesting system here
+end
 
-	if input.UserInputType == Enum.UserInputType.MouseButton1
-		or input.UserInputType == Enum.UserInputType.Touch then
+local function AutoPickupAllFruit()
+    print("Picking up all fruit...")
 
-		dragging = false
-	end
-end)
+    -- Add your own pickup system here
+end
 
--- =========================
--- INFINITE JUMP SYSTEM
--- =========================
+local function AutoSellAll()
+    print("Selling all items...")
 
-UserInputService.JumpRequest:Connect(function()
+    -- Add your own selling system here
+end
 
-	if InfiniteJump then
+local function SelectiveBuySeeds()
+    print("Selective seed buying enabled...")
 
-		local humanoid = getHumanoid()
+    -- Add selected seed logic
+end
 
-		if humanoid then
-			humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-		end
-	end
-end)
+local function SelectiveAutoSell()
+    print("Selective auto sell enabled...")
 
--- =========================
--- MINIMIZE
--- =========================
+    -- Add selected item selling logic
+end
 
-local minimized = false
+local function AutoBuyEgg()
+    print("Auto buying egg...")
 
-minimize.Activated:Connect(function()
+    -- Add your own egg purchasing logic
+end
 
-	minimized = not minimized
+--------------------------------------------------
+-- AUTOMATION LOOP
+--------------------------------------------------
 
-	content.Visible = not minimized
+task.spawn(function()
 
-	if minimized then
-		main.Size = UDim2.fromOffset(300, 45)
-		minimize.Text = "+"
-	else
-		main.Size = UDim2.fromOffset(300, 220)
-		minimize.Text = "—"
-	end
+    while task.wait(1) do
+
+        if Settings.AutoBuyAllSeeds then
+            AutoBuyAllSeeds()
+        end
+
+        if Settings.AutoHarvestAll then
+            AutoHarvestAll()
+        end
+
+        if Settings.AutoPickupAllFruit then
+            AutoPickupAllFruit()
+        end
+
+        if Settings.AutoSellAll then
+            AutoSellAll()
+        end
+
+        if Settings.BuySeeds then
+            SelectiveBuySeeds()
+        end
+
+        if Settings.AutoSell then
+            SelectiveAutoSell()
+        end
+
+        if Settings.AutoBuyEgg then
+            AutoBuyEgg()
+        end
+
+    end
+
 end)

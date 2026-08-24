@@ -1,6 +1,4 @@
-if game.PlaceId == 107778070777162 then
-
-	local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/omelxx12/DiomsHub/refs/heads/main/Test%20Hub"))()
+local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/omelxx12/DiomsHub/refs/heads/main/Test%20Hub"))()
 
 local Window = Rayfield:CreateWindow({
 	Name = "Steal an Egg Ni Dioms",

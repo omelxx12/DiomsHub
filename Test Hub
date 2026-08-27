@@ -1,5 +1,5 @@
--- Basic Personal Test GUI
--- Put this LocalScript inside:
+-- Personal Studio Test GUI
+-- Put this LocalScript in:
 -- StarterPlayer > StarterPlayerScripts
 
 local Players = game:GetService("Players")
@@ -7,17 +7,26 @@ local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 
--- Settings
+-- SETTINGS
 local InfiniteJump = false
 local SpeedEnabled = false
 
 local NORMAL_SPEED = 16
 local FAST_SPEED = 200
 
--- Get character humanoid
+--------------------------------------------------
+-- GET HUMANOID
+--------------------------------------------------
+
 local function getHumanoid()
-	local character = player.Character or player.CharacterAdded:Wait()
-	return character:WaitForChild("Humanoid")
+	local character = player.Character
+
+	if not character then
+		character = player.CharacterAdded:Wait()
+	end
+
+	return character:FindFirstChildOfClass("Humanoid")
+		or character:WaitForChild("Humanoid")
 end
 
 --------------------------------------------------
@@ -29,47 +38,75 @@ ScreenGui.Name = "EggTestGUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
--- Open button
-local OpenButton = Instance.new("TextButton")
-OpenButton.Size = UDim2.new(0, 100, 0, 40)
-OpenButton.Position = UDim2.new(0, 20, 0.5, -20)
-OpenButton.Text = "OPEN GUI"
-OpenButton.TextScaled = true
-OpenButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-OpenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-OpenButton.Parent = ScreenGui
-
--- Main Frame
+-- MAIN FRAME
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 250, 0, 220)
-MainFrame.Position = UDim2.new(0.5, -125, 0.5, -110)
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 260, 0, 230)
+MainFrame.Position = UDim2.new(0.5, -130, 0.5, -115)
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-MainFrame.Visible = true
+MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
 
--- Title
+-- TITLE
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 45)
 Title.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+Title.BorderSizePixel = 0
 Title.Text = "PERSONAL TEST GUI"
-Title.TextScaled = true
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextScaled = true
 Title.Parent = MainFrame
 
---------------------------------------------------
 -- INFINITE JUMP BUTTON
---------------------------------------------------
-
 local JumpButton = Instance.new("TextButton")
 JumpButton.Size = UDim2.new(0.85, 0, 0, 45)
 JumpButton.Position = UDim2.new(0.075, 0, 0, 60)
-JumpButton.Text = "Infinite Jump: OFF"
-JumpButton.TextScaled = true
 JumpButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+JumpButton.BorderSizePixel = 0
+JumpButton.Text = "Infinite Jump: OFF"
 JumpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+JumpButton.TextScaled = true
 JumpButton.Parent = MainFrame
+
+-- WALKSPEED BUTTON
+local SpeedButton = Instance.new("TextButton")
+SpeedButton.Size = UDim2.new(0.85, 0, 0, 45)
+SpeedButton.Position = UDim2.new(0.075, 0, 0, 115)
+SpeedButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+SpeedButton.BorderSizePixel = 0
+SpeedButton.Text = "WalkSpeed: OFF (16)"
+SpeedButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedButton.TextScaled = true
+SpeedButton.Parent = MainFrame
+
+-- CLOSE BUTTON
+local CloseButton = Instance.new("TextButton")
+CloseButton.Size = UDim2.new(0.85, 0, 0, 35)
+CloseButton.Position = UDim2.new(0.075, 0, 0, 175)
+CloseButton.BackgroundColor3 = Color3.fromRGB(120, 50, 50)
+CloseButton.BorderSizePixel = 0
+CloseButton.Text = "CLOSE"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextScaled = true
+CloseButton.Parent = MainFrame
+
+-- OPEN BUTTON
+local OpenButton = Instance.new("TextButton")
+OpenButton.Size = UDim2.new(0, 100, 0, 40)
+OpenButton.Position = UDim2.new(0, 20, 0.5, -20)
+OpenButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+OpenButton.BorderSizePixel = 0
+OpenButton.Text = "OPEN GUI"
+OpenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+OpenButton.TextScaled = true
+OpenButton.Visible = false
+OpenButton.Parent = ScreenGui
+
+--------------------------------------------------
+-- INFINITE JUMP TOGGLE
+--------------------------------------------------
 
 JumpButton.MouseButton1Click:Connect(function()
 	InfiniteJump = not InfiniteJump
@@ -82,44 +119,34 @@ JumpButton.MouseButton1Click:Connect(function()
 end)
 
 --------------------------------------------------
--- WALKSPEED BUTTON
+-- WALKSPEED TOGGLE
 --------------------------------------------------
-
-local SpeedButton = Instance.new("TextButton")
-SpeedButton.Size = UDim2.new(0.85, 0, 0, 45)
-SpeedButton.Position = UDim2.new(0.075, 0, 0, 115)
-SpeedButton.Text = "WalkSpeed: OFF (16)"
-SpeedButton.TextScaled = true
-SpeedButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-SpeedButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-SpeedButton.Parent = MainFrame
 
 SpeedButton.MouseButton1Click:Connect(function()
 	SpeedEnabled = not SpeedEnabled
 
-	local humanoid = getHumanoid()
-
 	if SpeedEnabled then
-		humanoid.WalkSpeed = FAST_SPEED
 		SpeedButton.Text = "WalkSpeed: ON (" .. FAST_SPEED .. ")"
+
+		local humanoid = getHumanoid()
+
+		if humanoid then
+			humanoid.WalkSpeed = FAST_SPEED
+		end
 	else
-		humanoid.WalkSpeed = NORMAL_SPEED
 		SpeedButton.Text = "WalkSpeed: OFF (" .. NORMAL_SPEED .. ")"
+
+		local humanoid = getHumanoid()
+
+		if humanoid then
+			humanoid.WalkSpeed = NORMAL_SPEED
+		end
 	end
 end)
 
 --------------------------------------------------
--- CLOSE BUTTON
+-- CLOSE / OPEN GUI
 --------------------------------------------------
-
-local CloseButton = Instance.new("TextButton")
-CloseButton.Size = UDim2.new(0.85, 0, 0, 35)
-CloseButton.Position = UDim2.new(0.075, 0, 0, 170)
-CloseButton.Text = "CLOSE"
-CloseButton.TextScaled = true
-CloseButton.BackgroundColor3 = Color3.fromRGB(120, 50, 50)
-CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseButton.Parent = MainFrame
 
 CloseButton.MouseButton1Click:Connect(function()
 	MainFrame.Visible = false
@@ -131,10 +158,8 @@ OpenButton.MouseButton1Click:Connect(function()
 	OpenButton.Visible = false
 end)
 
-OpenButton.Visible = false
-
 --------------------------------------------------
--- INFINITE JUMP
+-- INFINITE JUMP SYSTEM
 --------------------------------------------------
 
 UserInputService.JumpRequest:Connect(function()
@@ -148,11 +173,35 @@ UserInputService.JumpRequest:Connect(function()
 end)
 
 --------------------------------------------------
+-- KEEP WALKSPEED ACTIVE
+--------------------------------------------------
+
+task.spawn(function()
+	while true do
+		task.wait(0.1)
+
+		if SpeedEnabled then
+			local character = player.Character
+
+			if character then
+				local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+				if humanoid then
+					humanoid.WalkSpeed = FAST_SPEED
+				end
+			end
+		end
+	end
+end)
+
+--------------------------------------------------
 -- CHARACTER RESPAWN
 --------------------------------------------------
 
 player.CharacterAdded:Connect(function(character)
 	local humanoid = character:WaitForChild("Humanoid")
+
+	task.wait(0.2)
 
 	if SpeedEnabled then
 		humanoid.WalkSpeed = FAST_SPEED

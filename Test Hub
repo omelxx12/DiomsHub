@@ -1,121 +1,138 @@
+-- Owner Highlight Tool (Rayfield UI)
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 
-local CasualRemotes = ReplicatedStorage:WaitForChild("CasualRemotes")
-local ModeCheck = CasualRemotes:WaitForChild("IsCasualMode")
-local SetGodmode = CasualRemotes:WaitForChild("SetGodmode")
-local CollectEgg = CasualRemotes:WaitForChild("CollectEgg")
+-- ===== CONFIG =====
+local OWNER_IDS = {
+    11387658482, -- replace with your UserId(s)
+}
+-- ==================
 
--- Ask the server whether this is a casual server. If not, script stops here.
-local isCasual = ModeCheck:InvokeServer()
-if not isCasual then return end
+local function isOwner(player)
+    for _, id in ipairs(OWNER_IDS) do
+        if player.UserId == id then
+            return true
+        end
+    end
+    return false
+end
+
+if not isOwner(LocalPlayer) then
+    return -- non-owners never see the UI
+end
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-    Name = "Casual Mode",
-    LoadingTitle = "Casual Mode",
-    LoadingSubtitle = "Fun Server",
+    Name = "Owner Tools",
+    LoadingTitle = "Owner Tools",
+    LoadingSubtitle = "Player Highlighter",
     ConfigurationSaving = { Enabled = false },
 })
 
-local MoveTab = Window:CreateTab("Movement", nil)
+local Tab = Window:CreateTab("Highlights", nil)
 
-MoveTab:CreateSlider({
-    Name = "Walkspeed",
-    Range = {16, 150},
-    Increment = 1,
-    CurrentValue = 32,
-    Flag = "WalkspeedSlider",
-    Callback = function(Value)
-        local char = LocalPlayer.Character
-        if char and char:FindFirstChild("Humanoid") then
-            char.Humanoid.WalkSpeed = Value
-        end
-    end,
-})
+local activeHighlights = {}
 
-local flyConn
-MoveTab:CreateToggle({
-    Name = "Glide / Fly",
+local function addHighlight(player, color)
+    if not player.Character then return end
+    if activeHighlights[player] then
+        activeHighlights[player]:Destroy()
+    end
+    local h = Instance.new("Highlight")
+    h.FillColor = color
+    h.OutlineColor = Color3.new(1, 1, 1)
+    h.FillTransparency = 0.5
+    h.OutlineTransparency = 0
+    h.Adornee = player.Character
+    h.Parent = player.Character
+    activeHighlights[player] = h
+end
+
+local function removeHighlight(player)
+    if activeHighlights[player] then
+        activeHighlights[player]:Destroy()
+        activeHighlights[player] = nil
+    end
+end
+
+-- Toggle: highlight ALL players (e.g. to watch everyone at once during an egg-steal round)
+Tab:CreateToggle({
+    Name = "Highlight All Players",
     CurrentValue = false,
-    Flag = "GlideToggle",
+    Flag = "HighlightAll",
     Callback = function(Value)
-        local char = LocalPlayer.Character
-        if not char then return end
-        local root = char:FindFirstChild("HumanoidRootPart")
-        if not root then return end
-
         if Value then
-            local bv = Instance.new("BodyVelocity")
-            bv.Name = "CasualFly"
-            bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-            bv.Velocity = Vector3.new(0,0,0)
-            bv.Parent = root
-
-            flyConn = game:GetService("RunService").RenderStepped:Connect(function()
-                local cam = workspace.CurrentCamera
-                local moveDir = Vector3.new()
-                if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += cam.CFrame.LookVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= cam.CFrame.LookVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= cam.CFrame.RightVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += cam.CFrame.RightVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir += Vector3.new(0,1,0) end
-                if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir -= Vector3.new(0,1,0) end
-                bv.Velocity = moveDir.Magnitude > 0 and moveDir.Unit * 50 or Vector3.new(0,0,0)
-            end)
+            for _, plr in ipairs(Players:GetPlayers()) do
+                if plr ~= LocalPlayer then
+                    addHighlight(plr, Color3.fromRGB(255, 0, 0))
+                end
+            end
         else
-            if flyConn then flyConn:Disconnect() end
-            local bv = root:FindFirstChild("CasualFly")
-            if bv then bv:Destroy() end
+            for plr, _ in pairs(activeHighlights) do
+                removeHighlight(plr)
+            end
         end
     end,
 })
 
-local SafetyTab = Window:CreateTab("Safety", nil)
-SafetyTab:CreateToggle({
-    Name = "God Mode",
-    CurrentValue = false,
-    Flag = "GodmodeToggle",
-    Callback = function(Value)
-        SetGodmode:FireServer(Value)
-    end,
-})
-
-local EggTab = Window:CreateTab("Eggs", nil)
-
-local function getEggNames()
+-- Dropdown to pick one player
+local function getPlayerNames()
     local names = {}
-    local eggFolder = workspace:FindFirstChild("Eggs")
-    if eggFolder then
-        for _, egg in ipairs(eggFolder:GetChildren()) do
-            table.insert(names, egg.Name)
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            table.insert(names, plr.Name)
         end
     end
     return names
 end
 
-local EggDropdown = EggTab:CreateDropdown({
-    Name = "Select Egg",
-    Options = getEggNames(),
+local PlayerDropdown = Tab:CreateDropdown({
+    Name = "Select Player",
+    Options = getPlayerNames(),
     CurrentOption = {},
-    Flag = "EggSelect",
+    Flag = "PlayerSelect",
     Callback = function(Option) end,
 })
 
-EggTab:CreateButton({
-    Name = "Collect Selected Egg",
+Tab:CreateButton({
+    Name = "Highlight Selected (Green)",
     Callback = function()
-        local selected = EggDropdown.CurrentOption[1]
-        if selected then CollectEgg:FireServer(selected) end
+        local selected = PlayerDropdown.CurrentOption[1]
+        local plr = Players:FindFirstChild(selected or "")
+        if plr then
+            addHighlight(plr, Color3.fromRGB(0, 255, 0))
+        end
     end,
 })
 
-EggTab:CreateButton({
-    Name = "Refresh Egg List",
+Tab:CreateButton({
+    Name = "Remove Selected Highlight",
     Callback = function()
-        EggDropdown:Refresh(getEggNames())
+        local selected = PlayerDropdown.CurrentOption[1]
+        local plr = Players:FindFirstChild(selected or "")
+        if plr then
+            removeHighlight(plr)
+        end
     end,
 })
+
+Tab:CreateButton({
+    Name = "Refresh Player List",
+    Callback = function()
+        PlayerDropdown:Refresh(getPlayerNames())
+    end,
+})
+
+Players.PlayerRemoving:Connect(function(plr)
+    removeHighlight(plr)
+end)
+
+Players.PlayerAdded:Connect(function(plr)
+    plr.CharacterAdded:Connect(function()
+        if activeHighlights[plr] then
+            task.wait(0.5)
+            addHighlight(plr, Color3.fromRGB(255, 0, 0))
+        end
+    end)
+end)

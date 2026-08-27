@@ -1,57 +1,121 @@
--- Owner Highlight Tool (Rayfield UI)
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 
--- ===== CONFIG =====
-local OWNER_IDS = {
-    123456789, -- replace with your UserId(s)
-}
--- ==================
+local CasualRemotes = ReplicatedStorage:WaitForChild("CasualRemotes")
+local ModeCheck = CasualRemotes:WaitForChild("IsCasualMode")
+local SetGodmode = CasualRemotes:WaitForChild("SetGodmode")
+local CollectEgg = CasualRemotes:WaitForChild("CollectEgg")
 
-local function isOwner(player)
-    for _, id in ipairs(OWNER_IDS) do
-        if player.UserId == id then
-            return true
-        end
-    end
-    return false
-end
-
-if not isOwner(LocalPlayer) then
-    return -- non-owners never see the UI
-end
+-- Ask the server whether this is a casual server. If not, script stops here.
+local isCasual = ModeCheck:InvokeServer()
+if not isCasual then return end
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-    Name = "Owner Tools",
-    LoadingTitle = "Owner Tools",
-    LoadingSubtitle = "Player Highlighter",
+    Name = "Casual Mode",
+    LoadingTitle = "Casual Mode",
+    LoadingSubtitle = "Fun Server",
     ConfigurationSaving = { Enabled = false },
 })
 
-local Tab = Window:CreateTab("Highlights", nil)
+local MoveTab = Window:CreateTab("Movement", nil)
 
-local activeHighlights = {}
+MoveTab:CreateSlider({
+    Name = "Walkspeed",
+    Range = {16, 150},
+    Increment = 1,
+    CurrentValue = 32,
+    Flag = "WalkspeedSlider",
+    Callback = function(Value)
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid.WalkSpeed = Value
+        end
+    end,
+})
 
-local function addHighlight(player, color)
-    if not player.Character then return end
-    if activeHighlights[player] then
-        activeHighlights[player]:Destroy()
+local flyConn
+MoveTab:CreateToggle({
+    Name = "Glide / Fly",
+    CurrentValue = false,
+    Flag = "GlideToggle",
+    Callback = function(Value)
+        local char = LocalPlayer.Character
+        if not char then return end
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+
+        if Value then
+            local bv = Instance.new("BodyVelocity")
+            bv.Name = "CasualFly"
+            bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+            bv.Velocity = Vector3.new(0,0,0)
+            bv.Parent = root
+
+            flyConn = game:GetService("RunService").RenderStepped:Connect(function()
+                local cam = workspace.CurrentCamera
+                local moveDir = Vector3.new()
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += cam.CFrame.LookVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= cam.CFrame.LookVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= cam.CFrame.RightVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += cam.CFrame.RightVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir += Vector3.new(0,1,0) end
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir -= Vector3.new(0,1,0) end
+                bv.Velocity = moveDir.Magnitude > 0 and moveDir.Unit * 50 or Vector3.new(0,0,0)
+            end)
+        else
+            if flyConn then flyConn:Disconnect() end
+            local bv = root:FindFirstChild("CasualFly")
+            if bv then bv:Destroy() end
+        end
+    end,
+})
+
+local SafetyTab = Window:CreateTab("Safety", nil)
+SafetyTab:CreateToggle({
+    Name = "God Mode",
+    CurrentValue = false,
+    Flag = "GodmodeToggle",
+    Callback = function(Value)
+        SetGodmode:FireServer(Value)
+    end,
+})
+
+local EggTab = Window:CreateTab("Eggs", nil)
+
+local function getEggNames()
+    local names = {}
+    local eggFolder = workspace:FindFirstChild("Eggs")
+    if eggFolder then
+        for _, egg in ipairs(eggFolder:GetChildren()) do
+            table.insert(names, egg.Name)
+        end
     end
-    local h = Instance.new("Highlight")
-    h.FillColor = color
-    h.OutlineColor = Color3.new(1, 1, 1)
-    h.FillTransparency = 0.5
-    h.OutlineTransparency = 0
-    h.Adornee = player.Character
-    h.Parent = player.Character
-    activeHighlights[player] = h
+    return names
 end
 
-local function removeHighlight(player)
-    if activeHighlights[player] then
-        activeHighlights[player]:Destroy()
-        activeHighlights[player] = nil
-    end
-end
+local EggDropdown = EggTab:CreateDropdown({
+    Name = "Select Egg",
+    Options = getEggNames(),
+    CurrentOption = {},
+    Flag = "EggSelect",
+    Callback = function(Option) end,
+})
+
+EggTab:CreateButton({
+    Name = "Collect Selected Egg",
+    Callback = function()
+        local selected = EggDropdown.CurrentOption[1]
+        if selected then CollectEgg:FireServer(selected) end
+    end,
+})
+
+EggTab:CreateButton({
+    Name = "Refresh Egg List",
+    Callback = function()
+        EggDropdown:Refresh(getEggNames())
+    end,
+})

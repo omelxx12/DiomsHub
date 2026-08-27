@@ -1,162 +1,140 @@
--- Basic Personal Test GUI
--- Put this LocalScript inside:
--- StarterPlayer > StarterPlayerScripts
-
+-- Owner Highlight Tool (Rayfield UI)
 local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
 
-local player = Players.LocalPlayer
+-- ===== CONFIG =====
+local OWNER_IDS = {
+    123456789, -- replace with your UserId(s)
+}
+-- ==================
 
--- Settings
-local InfiniteJump = false
-local SpeedEnabled = false
-
-local NORMAL_SPEED = 16
-local FAST_SPEED = 200
-
--- Get character humanoid
-local function getHumanoid()
-	local character = player.Character or player.CharacterAdded:Wait()
-	return character:WaitForChild("Humanoid")
+local function isOwner(player)
+    for _, id in ipairs(OWNER_IDS) do
+        if player.UserId == id then
+            return true
+        end
+    end
+    return false
 end
 
---------------------------------------------------
--- CREATE GUI
---------------------------------------------------
+if not isOwner(LocalPlayer) then
+    return -- non-owners get nothing; script just stops here
+end
 
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "EggTestGUI"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = player:WaitForChild("PlayerGui")
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- Open button
-local OpenButton = Instance.new("TextButton")
-OpenButton.Size = UDim2.new(0, 100, 0, 40)
-OpenButton.Position = UDim2.new(0, 20, 0.5, -20)
-OpenButton.Text = "OPEN GUI"
-OpenButton.TextScaled = true
-OpenButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-OpenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-OpenButton.Parent = ScreenGui
+local Window = Rayfield:CreateWindow({
+    Name = "Owner Tools",
+    LoadingTitle = "Owner Tools",
+    LoadingSubtitle = "Highlight System",
+    ConfigurationSaving = { Enabled = false },
+})
 
--- Main Frame
-local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 250, 0, 220)
-MainFrame.Position = UDim2.new(0.5, -125, 0.5, -110)
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-MainFrame.Visible = true
-MainFrame.Active = true
-MainFrame.Draggable = true
-MainFrame.Parent = ScreenGui
+local Tab = Window:CreateTab("Highlights", nil)
 
--- Title
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 45)
-Title.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-Title.Text = "PERSONAL TEST GUI"
-Title.TextScaled = true
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.Parent = MainFrame
+local activeHighlights = {} -- [player] = Highlight instance
 
---------------------------------------------------
--- INFINITE JUMP BUTTON
---------------------------------------------------
+local function addHighlight(player, color)
+    if not player.Character then return end
+    if activeHighlights[player] then
+        activeHighlights[player]:Destroy()
+    end
+    local h = Instance.new("Highlight")
+    h.FillColor = color
+    h.OutlineColor = Color3.new(1, 1, 1)
+    h.FillTransparency = 0.5
+    h.OutlineTransparency = 0
+    h.Adornee = player.Character
+    h.Parent = player.Character
+    activeHighlights[player] = h
+end
 
-local JumpButton = Instance.new("TextButton")
-JumpButton.Size = UDim2.new(0.85, 0, 0, 45)
-JumpButton.Position = UDim2.new(0.075, 0, 0, 60)
-JumpButton.Text = "Infinite Jump: OFF"
-JumpButton.TextScaled = true
-JumpButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-JumpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-JumpButton.Parent = MainFrame
+local function removeHighlight(player)
+    if activeHighlights[player] then
+        activeHighlights[player]:Destroy()
+        activeHighlights[player] = nil
+    end
+end
 
-JumpButton.MouseButton1Click:Connect(function()
-	InfiniteJump = not InfiniteJump
+-- Toggle: highlight ALL players
+Tab:CreateToggle({
+    Name = "Highlight All Players",
+    CurrentValue = false,
+    Flag = "HighlightAll",
+    Callback = function(Value)
+        if Value then
+            for _, plr in ipairs(Players:GetPlayers()) do
+                if plr ~= LocalPlayer then
+                    addHighlight(plr, Color3.fromRGB(255, 0, 0))
+                end
+            end
+        else
+            for plr, _ in pairs(activeHighlights) do
+                removeHighlight(plr)
+            end
+        end
+    end,
+})
 
-	if InfiniteJump then
-		JumpButton.Text = "Infinite Jump: ON"
-	else
-		JumpButton.Text = "Infinite Jump: OFF"
-	end
+-- Dropdown: pick one player to highlight individually
+local function getPlayerNames()
+    local names = {}
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            table.insert(names, plr.Name)
+        end
+    end
+    return names
+end
+
+local PlayerDropdown = Tab:CreateDropdown({
+    Name = "Select Player",
+    Options = getPlayerNames(),
+    CurrentOption = {},
+    Flag = "PlayerSelect",
+    Callback = function(Option) end,
+})
+
+Tab:CreateButton({
+    Name = "Highlight Selected (Green)",
+    Callback = function()
+        local selected = PlayerDropdown.CurrentOption[1]
+        local plr = Players:FindFirstChild(selected or "")
+        if plr then
+            addHighlight(plr, Color3.fromRGB(0, 255, 0))
+        end
+    end,
+})
+
+Tab:CreateButton({
+    Name = "Remove Selected Highlight",
+    Callback = function()
+        local selected = PlayerDropdown.CurrentOption[1]
+        local plr = Players:FindFirstChild(selected or "")
+        if plr then
+            removeHighlight(plr)
+        end
+    end,
+})
+
+Tab:CreateButton({
+    Name = "Refresh Player List",
+    Callback = function()
+        PlayerDropdown:Refresh(getPlayerNames())
+    end,
+})
+
+-- Clean up highlight if a player leaves
+Players.PlayerRemoving:Connect(function(plr)
+    removeHighlight(plr)
 end)
 
---------------------------------------------------
--- WALKSPEED BUTTON
---------------------------------------------------
-
-local SpeedButton = Instance.new("TextButton")
-SpeedButton.Size = UDim2.new(0.85, 0, 0, 45)
-SpeedButton.Position = UDim2.new(0.075, 0, 0, 115)
-SpeedButton.Text = "WalkSpeed: OFF (16)"
-SpeedButton.TextScaled = true
-SpeedButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-SpeedButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-SpeedButton.Parent = MainFrame
-
-SpeedButton.MouseButton1Click:Connect(function()
-	SpeedEnabled = not SpeedEnabled
-
-	local humanoid = getHumanoid()
-
-	if SpeedEnabled then
-		humanoid.WalkSpeed = FAST_SPEED
-		SpeedButton.Text = "WalkSpeed: ON (" .. FAST_SPEED .. ")"
-	else
-		humanoid.WalkSpeed = NORMAL_SPEED
-		SpeedButton.Text = "WalkSpeed: OFF (" .. NORMAL_SPEED .. ")"
-	end
-end)
-
---------------------------------------------------
--- CLOSE BUTTON
---------------------------------------------------
-
-local CloseButton = Instance.new("TextButton")
-CloseButton.Size = UDim2.new(0.85, 0, 0, 35)
-CloseButton.Position = UDim2.new(0.075, 0, 0, 170)
-CloseButton.Text = "CLOSE"
-CloseButton.TextScaled = true
-CloseButton.BackgroundColor3 = Color3.fromRGB(120, 50, 50)
-CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseButton.Parent = MainFrame
-
-CloseButton.MouseButton1Click:Connect(function()
-	MainFrame.Visible = false
-	OpenButton.Visible = true
-end)
-
-OpenButton.MouseButton1Click:Connect(function()
-	MainFrame.Visible = true
-	OpenButton.Visible = false
-end)
-
-OpenButton.Visible = false
-
---------------------------------------------------
--- INFINITE JUMP
---------------------------------------------------
-
-UserInputService.JumpRequest:Connect(function()
-	if InfiniteJump then
-		local humanoid = getHumanoid()
-
-		if humanoid then
-			humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-		end
-	end
-end)
-
---------------------------------------------------
--- CHARACTER RESPAWN
---------------------------------------------------
-
-player.CharacterAdded:Connect(function(character)
-	local humanoid = character:WaitForChild("Humanoid")
-
-	if SpeedEnabled then
-		humanoid.WalkSpeed = FAST_SPEED
-	else
-		humanoid.WalkSpeed = NORMAL_SPEED
-	end
+-- Re-apply highlight on respawn if "Highlight All" style tracking is desired
+Players.PlayerAdded:Connect(function(plr)
+    plr.CharacterAdded:Connect(function()
+        if activeHighlights[plr] then
+            task.wait(0.5)
+            addHighlight(plr, Color3.fromRGB(255, 0, 0))
+        end
+    end)
 end)

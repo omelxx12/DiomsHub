@@ -18,7 +18,7 @@ local function isOwner(player)
 end
 
 if not isOwner(LocalPlayer) then
-    return -- non-owners get nothing; script just stops here
+    return -- non-owners never see the UI
 end
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
@@ -26,13 +26,13 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
     Name = "Owner Tools",
     LoadingTitle = "Owner Tools",
-    LoadingSubtitle = "Highlight System",
+    LoadingSubtitle = "Player Highlighter",
     ConfigurationSaving = { Enabled = false },
 })
 
 local Tab = Window:CreateTab("Highlights", nil)
 
-local activeHighlights = {} -- [player] = Highlight instance
+local activeHighlights = {}
 
 local function addHighlight(player, color)
     if not player.Character then return end
@@ -55,86 +55,3 @@ local function removeHighlight(player)
         activeHighlights[player] = nil
     end
 end
-
--- Toggle: highlight ALL players
-Tab:CreateToggle({
-    Name = "Highlight All Players",
-    CurrentValue = false,
-    Flag = "HighlightAll",
-    Callback = function(Value)
-        if Value then
-            for _, plr in ipairs(Players:GetPlayers()) do
-                if plr ~= LocalPlayer then
-                    addHighlight(plr, Color3.fromRGB(255, 0, 0))
-                end
-            end
-        else
-            for plr, _ in pairs(activeHighlights) do
-                removeHighlight(plr)
-            end
-        end
-    end,
-})
-
--- Dropdown: pick one player to highlight individually
-local function getPlayerNames()
-    local names = {}
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer then
-            table.insert(names, plr.Name)
-        end
-    end
-    return names
-end
-
-local PlayerDropdown = Tab:CreateDropdown({
-    Name = "Select Player",
-    Options = getPlayerNames(),
-    CurrentOption = {},
-    Flag = "PlayerSelect",
-    Callback = function(Option) end,
-})
-
-Tab:CreateButton({
-    Name = "Highlight Selected (Green)",
-    Callback = function()
-        local selected = PlayerDropdown.CurrentOption[1]
-        local plr = Players:FindFirstChild(selected or "")
-        if plr then
-            addHighlight(plr, Color3.fromRGB(0, 255, 0))
-        end
-    end,
-})
-
-Tab:CreateButton({
-    Name = "Remove Selected Highlight",
-    Callback = function()
-        local selected = PlayerDropdown.CurrentOption[1]
-        local plr = Players:FindFirstChild(selected or "")
-        if plr then
-            removeHighlight(plr)
-        end
-    end,
-})
-
-Tab:CreateButton({
-    Name = "Refresh Player List",
-    Callback = function()
-        PlayerDropdown:Refresh(getPlayerNames())
-    end,
-})
-
--- Clean up highlight if a player leaves
-Players.PlayerRemoving:Connect(function(plr)
-    removeHighlight(plr)
-end)
-
--- Re-apply highlight on respawn if "Highlight All" style tracking is desired
-Players.PlayerAdded:Connect(function(plr)
-    plr.CharacterAdded:Connect(function()
-        if activeHighlights[plr] then
-            task.wait(0.5)
-            addHighlight(plr, Color3.fromRGB(255, 0, 0))
-        end
-    end)
-end)
